@@ -1,13 +1,34 @@
 import React, { Component } from 'react'
-import { Modal, View, StyleSheet, TouchableWithoutFeedback, Text, TouchableOpacity, TextInput } from 'react-native'
+import { Modal, View, StyleSheet, TouchableWithoutFeedback, Text, TouchableOpacity, TextInput, Platform } from 'react-native'
 import CommonStyles from '../CommonStyles'
+import DateTimePicker from '@react-native-community/datetimepicker'
+import moment from 'moment'
 
-const initialState = { desc: '' }
+const initialState = { desc: '', date: new Date(), showDatePicker: false }
 
 export default class AddTask extends Component {
 
     state = {
         ...initialState
+    }
+
+    getDatePicker = () => {
+        let datePicker = <DateTimePicker value={this.state.date} onChange={(event, date) => {this.setState({date: date, showDatePicker: false})}} mode='date'/>
+
+        const dateString = moment(this.state.date).format('dddd, D [de] MMMM [de] YYYY')
+        if(Platform.OS === 'android'){
+            datePicker = (
+                <View>
+                    <TouchableOpacity onPress={() => this.setState({showDatePicker : true})}>
+                        <Text style={styles.date}>
+                            {dateString}
+                        </Text>
+                    </TouchableOpacity>
+                    {this.state.showDatePicker && datePicker}
+                </View>
+            )
+        }
+        return datePicker
     }
 
     render(){
@@ -19,6 +40,7 @@ export default class AddTask extends Component {
                 <View style={styles.container}>
                     <Text style={styles.header}>Nova Tarefa</Text>
                     <TextInput style={styles.input} placeholder='Informe a descrição...' onChangeText={newDesc => this.setState({desc: newDesc})} value={this.state.desc}/>
+                    {this.getDatePicker()}
                     <View style={styles.buttons}>
                         <TouchableOpacity onPress={this.props.onCancel}>
                             <Text style={styles.button}>Cancelar</Text>
@@ -69,5 +91,10 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#E3E3E3',
         borderRadius: 6
+    },
+    date: {
+        fontFamily: CommonStyles.fontFamily,
+        fontSize: 20,
+        marginLeft: 15
     }
 })
