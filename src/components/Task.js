@@ -1,18 +1,28 @@
     import React from 'react'
-    import {View, Text, StyleSheet} from 'react-native'
+    import {View, Text, StyleSheet, TouchableWithoutFeedback} from 'react-native'
     import  Icon  from 'react-native-vector-icons/FontAwesome'
 
     import CommonStyles from '../CommonStyles'
+    import moment from 'moment'
+    import 'moment/locale/pt-br'
 
     export default props => {
+
+        const doneOrNotStyles = props.doneAt != null ? { textDecorationLine: 'line-through' } : {}
+
+        const date = props.doneAt ? props.doneAt : props.estimateAt
+        const dataFormatado = moment(date).locale('pt-br').format('ddd, D [de] MMMM')
+        
         return (
             <View style={styles.container}>
-                <View style={styles.cheackContainer}>
-                    {getCheckView(props.doneAt)}
-                </View>
+                <TouchableWithoutFeedback onPress={() => props.toggleTask(props.id)}>
+                    <View style={styles.cheackContainer}>
+                        {getCheckView(props.doneAt)}
+                    </View>
+                </TouchableWithoutFeedback>
                 <View>
-                    <Text>{props.desc}</Text>
-                    <Text>{props.estimateAt + ""}</Text>
+                    <Text style={[styles.desc, doneOrNotStyles]}>{props.desc}</Text>
+                    <Text style={styles.date}>{dataFormatado}</Text>
                 </View>
             </View>
         )
@@ -60,5 +70,15 @@
             backgroundColor: '#4D7031',
             alignItems: 'center',
             justifyContent: 'center'
+        },
+        desc: {
+            fontFamily: CommonStyles.fontFamily,
+            color: CommonStyles.colors.mainText,
+            fontSize: 15
+        },
+        date: {
+            fontFamily: CommonStyles.fontFamily,
+            color: CommonStyles.colors.subText,
+            fontSize: 12
         }
     })
