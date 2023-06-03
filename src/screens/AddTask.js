@@ -30,7 +30,7 @@ export default class AddTask extends Component {
                 //se cancelar o seletor de data, dele define o valor para indefinido
                 if (event?.type === 'dismissed') {
                     //verificando se foi fechado o seletor e se sim, setando o valor anterior como o valor selecionado
-                    this.setState({date: this.state.date, showDatePicker: false})
+                    this.setState({date: new Date(), showDatePicker: false})
                     return;
                 }
                 this.setState({date: date, showDatePicker: false})
