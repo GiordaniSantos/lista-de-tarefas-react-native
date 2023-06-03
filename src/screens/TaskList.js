@@ -15,6 +15,7 @@ export default class TaskList extends Component {
 
     state = {
         showDoneTasks: true,
+        visibleTasks: [],
         tasks: [{
             id: Math.random(),
             desc: 'Comprar Livro',
@@ -29,8 +30,24 @@ export default class TaskList extends Component {
         }]
     }
 
+    componentDidMount = () => {
+        this.filterTasks()
+    }
+
     toggleFilter = () => {
-        this.setState({ showDoneTasks: !this.state.showDoneTasks })
+        this.setState({ showDoneTasks: !this.state.showDoneTasks }, this.filterTasks)
+    }
+
+    filterTasks = () => {
+        let visibleTasks = null 
+        if(this.state.showDoneTasks){
+            visibleTasks = [...this.state.tasks]
+        }else{
+            const pending = task => task.doneAt === null // mesma coisa que function(task) {return task.doneAt === null}
+            visibleTasks = this.state.tasks.filter(pending)
+        }
+
+        this.setState({ visibleTasks })
     }
 
     toggleTask = taskId => {
@@ -41,7 +58,7 @@ export default class TaskList extends Component {
             }
         })
 
-        this.setState({ tasks: tasks})
+        this.setState({ tasks: tasks}, this.filterTasks)
     }
 
     render(){
@@ -60,7 +77,7 @@ export default class TaskList extends Component {
                     </View>
                 </ImageBackground>
                 <View style={styles.taskList}>
-                    <FlatList data={this.state.tasks} keyExtractor={item => `${item.id}`} renderItem={({item}) => <Task {...item} toggleTask={this.toggleTask}/>} />
+                    <FlatList data={this.state.visibleTasks} keyExtractor={item => `${item.id}`} renderItem={({item}) => <Task {...item} toggleTask={this.toggleTask}/>} />
                 </View>
             </View>
         )
