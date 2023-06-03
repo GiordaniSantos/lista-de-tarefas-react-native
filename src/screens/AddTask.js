@@ -25,7 +25,17 @@ export default class AddTask extends Component {
     }
 
     getDatePicker = () => {
-        let datePicker = <DateTimePicker value={this.state.date} onChange={(event, date) => {this.setState({date: date, showDatePicker: false})}} mode='date'/>
+        let datePicker = <DateTimePicker value={this.state.date} onChange={
+            (event, date) => {
+                //se cancelar o seletor de data, dele define o valor para indefinido
+                if (event?.type === 'dismissed') {
+                    //verificando se foi fechado o seletor e se sim, setando o valor anterior como o valor selecionado
+                    this.setState({date: this.state.date, showDatePicker: false})
+                    return;
+                }
+                this.setState({date: date, showDatePicker: false})
+            }
+        } mode='date'/>
 
         const dateString = moment(this.state.date).format('dddd, D [de] MMMM [de] YYYY')
         if(Platform.OS === 'android'){
