@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import {View, Text, ImageBackground, StyleSheet, FlatList, TouchableOpacity, Platform} from 'react-native'
+import {View, Text, ImageBackground, StyleSheet, FlatList, TouchableOpacity, Platform, Alert} from 'react-native'
 
 import commonStyles from '../CommonStyles'
 import todayImage from '../../assets/imgs/today.jpg'
@@ -63,11 +63,32 @@ export default class TaskList extends Component {
         this.setState({ tasks: tasks}, this.filterTasks)
     }
 
+    addTask = (newTask) => {
+        if(!newTask.desc || !newTask.desc.trim()){
+            Alert.alert('Dados Inválidos', 'Descrição não informada!')
+            return
+        }
+        const tasks = [...this.state.tasks]
+        tasks.push({
+            id: Math.random(),
+            desc: newTask.desc,
+            estimateAt: newTask.date,
+            doneAt: null
+        })
+
+        this.setState({ tasks, showAddTaskModal: false }, this.filterTasks)
+    }
+
+    deleteTask = id => {
+        const tasks = this.state.tasks.filter(task => task.id !== id)
+        this.setState({tasks}, this.filterTasks)
+    }
+
     render(){
         const today = moment().locale('pt-BR').format('ddd, D [de] MMMM')
         return (
             <View style={styles.container}>
-                <AddTask isVisible={this.state.showAddTaskModal} onCancel={() => { this.setState({showAddTaskModal:false}) }}/>
+                <AddTask isVisible={this.state.showAddTaskModal} onCancel={() => { this.setState({showAddTaskModal:false}) }} onSave={this.addTask}/>
                 <ImageBackground source={todayImage} style={styles.background}>
                     <View style={styles.iconBar}>
                         <TouchableOpacity onPress={this.toggleFilter}>
@@ -80,7 +101,7 @@ export default class TaskList extends Component {
                     </View>
                 </ImageBackground>
                 <View style={styles.taskList}>
-                    <FlatList data={this.state.visibleTasks} keyExtractor={item => `${item.id}`} renderItem={({item}) => <Task {...item} toggleTask={this.toggleTask}/>} />
+                    <FlatList data={this.state.visibleTasks} keyExtractor={item => `${item.id}`} renderItem={({item}) => <Task {...item} toggleTask={this.toggleTask} onDelete={this.deleteTask}/>} />
                 </View>
                 <TouchableOpacity style={styles.addButton} onPress={() => this.setState({ showAddTaskModal: true })} activeOpacity={0.7}>
                     <Icon name='plus' size={20} color={commonStyles.colors.secondary} />
