@@ -1,25 +1,62 @@
 import React, { Component } from 'react'
 import { ImageBackground, Text, StyleSheet, View, TouchableOpacity, Alert } from 'react-native'
+import axios from 'axios'
 
 import backgroundImage from '../../assets/imgs/login.jpg'
 import CommonStyles from '../CommonStyles'
 import AuthInput from '../components/AuthInput'
 
+import { baseUrl, showError, showSuccess } from '../Common'
+
+const initialState = { 
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    telaCriacao: false
+}
+
 export default class Auth extends Component {
 
     state = {
-        name: '',
-        email: '',
-        password: '',
-        confirmPassword: '',
-        telaCriacao: false
+        ...initialState
     }
 
     signinOrSiginUp = () => {
         if(this.state.telaCriacao){
-            Alert.alert('Sucesso!', 'Criar conta')
+            this.cadastrarUsuario()
         } else {
-            Alert.alert('Sucesso!', 'Logar')
+            this.logar()
+        }
+    }
+
+    cadastrarUsuario = async () => {
+        try{
+            await axios.post(`${baseUrl}/signup`, {
+                name: this.state.name,
+                email: this.state.email,
+                password: this.state.password,
+                confirmPassword: this.state.confirmPassword,
+            })
+
+            showSuccess('Usuário cadastrado com sucesso!')
+            this.setState({ ...initialState })
+        } catch(e) {
+            showError(e)
+        }
+    }
+
+    logar = async () => {
+        try{
+            const res = await axios.post(`${baseUrl}/signin`, {
+                email: this.state.email,
+                password: this.state.password
+            })
+
+            axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`
+            this.props.navigation.navigate('Home')
+        }catch(e){
+            showError(e)
         }
     }
 
