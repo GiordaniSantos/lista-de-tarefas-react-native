@@ -4,12 +4,12 @@ import {View, Text, ImageBackground, StyleSheet, FlatList, TouchableOpacity, Pla
 import commonStyles from '../CommonStyles'
 import todayImage from '../../assets/imgs/today.jpg'
 
-import SsyncStorage from '@react-native-community/async-storage'
 import Icon from 'react-native-vector-icons/FontAwesome'
+import axios from 'axios'
 import moment from 'moment'
 import 'moment/locale/pt-br'
 
-
+import { baseUrl, showError } from '../Common'
 import Task from '../components/Task'
 import AddTask from './AddTask'
 import AsyncStorage from '@react-native-community/async-storage'
@@ -27,8 +27,20 @@ export default class TaskList extends Component {
 
     componentDidMount = async () => {
         const stateString = await AsyncStorage.getItem('tasksState')
-        const state = JSON.parse(stateString) || initialState
-        this.setState(state, this.filterTasks)
+        const savedState = JSON.parse(stateString) || initialState
+        this.setState({ showDoneTasks: savedState.showDoneTasks }, this.filterTasks)
+
+        this.loadTasks()
+    }
+
+    loadTasks = async () => {
+        try{
+            const maxDate = moment().format('YYYY-MM-DD 23:59:59')
+            const res = await axios.get(`${baseUrl}/tasks?date=${maxDate}`)
+            this.setState({ tasks: res.data }, this.filterTasks)
+        }catch(e) {
+            showError(e)
+        }
     }
 
     toggleFilter = () => {
@@ -45,39 +57,53 @@ export default class TaskList extends Component {
         }
 
         this.setState({ visibleTasks })
-        AsyncStorage.setItem('tasksState', JSON.stringify(this.state))
+        AsyncStorage.setItem('tasksState', JSON.stringify({
+            showDoneTasks: this.state.showDoneTasks
+        }))
     }
 
-    toggleTask = taskId => {
-        const tasks = [...this.state.tasks]
-        tasks.forEach(task => {
-            if(task.id === taskId){
-                task.doneAt = task.doneAt ? null : new Date()
-            }
-        })
-
-        this.setState({ tasks: tasks}, this.filterTasks)
+    toggleTask = async taskId => {
+       try{
+            await axios.put(`${baseUrl}/tasks/${taskId}/toggle`)
+            this.loadTasks()
+       } catch(e) {
+        showError(e)
+       }
     }
 
-    addTask = (newTask) => {
+    addTask = async newTask => {
         if(!newTask.desc || !newTask.desc.trim()){
             Alert.alert('Dados Inválidos', 'Descrição não informada!')
             return
         }
-        const tasks = [...this.state.tasks]
-        tasks.push({
-            id: Math.random(),
-            desc: newTask.desc,
-            estimateAt: newTask.date,
-            doneAt: null
-        })
+        
+        try {
+            dia  = newTask.date.getDate().toString(),
+                diaF = (dia.length == 1) ? '0'+dia : dia,
+                mes  = (newTask.date.getMonth()+1).toString(), //+1 pois no getMonth Janeiro começa com zero.
+                mesF = (mes.length == 1) ? '0'+mes : mes,
+                anoF = newTask.date.getFullYear();
+                //formatando data para yyyy-mm-dd
+            await axios.post(`${baseUrl}/tasks`, {
+                desc: newTask.desc,
+                estimateAt: anoF+"-"+mesF+"-"+diaF
+            })
 
-        this.setState({ tasks, showAddTaskModal: false }, this.filterTasks)
+            this.setState({ showAddTaskModal: false }, this.loadTasks)
+
+        } catch (error) {
+            showError(error)
+        }
+
     }
 
-    deleteTask = id => {
-        const tasks = this.state.tasks.filter(task => task.id !== id)
-        this.setState({tasks}, this.filterTasks)
+    deleteTask = async taskId => {
+        try {
+            await axios.delete(`${baseUrl}/tasks/${taskId}`)
+            this.loadTasks()
+        } catch (error) {
+            showError(error)
+        }
     }
 
     render(){
